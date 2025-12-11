@@ -1,0 +1,155 @@
+---
+Name: SetX.exe
+Description: Microsoft-signed utility used to create or modify user and system environment variables. Supports registry extraction, remote execution context, and coordinate-based file parsing. Useful for persistence, execution flow hijacking, discovery, and lateral movement.
+Aliases:
+  - Alias: setx64.exe
+Author: Raja Singh
+Created: 2025-12-10
+
+Commands:
+  - Command: setx MACHINE COMPAQ
+    Description: Creates or updates a user environment variable.
+    Usecase: Persistent environment modification.
+    Category: Hijack Execution Flow
+    Privileges: User
+    MitreID: T1547
+    OperatingSystem: Windows
+
+  - Command: setx MACHINE "COMPAQ COMPUTER" /M
+    Description: Creates or updates a system-wide environment variable.
+    Usecase: System-level persistence.
+    Category: Hijack Execution Flow
+    Privileges: Administrator
+    MitreID: T1547
+    OperatingSystem: Windows
+
+  - Command: setx MYPATH %PATH%
+    Description: Copies current PATH into a new variable.
+    Usecase: Allows PATH manipulation before hijack.
+    Category: Hijack Execution Flow
+    Privileges: User
+    MitreID: T1574.009
+    OperatingSystem: Windows
+
+  - Command: setx MYPATH ~PATH~
+    Description: Uses tilde syntax to copy PATH.
+    Usecase: Introduce malicious directories for execution hijacking.
+    Category: Hijack Execution Flow
+    Privileges: User
+    MitreID: T1574.009
+    OperatingSystem: Windows
+
+  - Command: setx /S system /U user /P password MACHINE COMPAQ
+    Description: Creates a variable on a remote host.
+    Usecase: Remote persistence without shell access.
+    Category: Lateral Movement
+    Privileges: DomainUser
+    MitreID: T1021
+    OperatingSystem: Windows
+
+  - Command: setx /S system /U user /P password MYPATH ^%PATH^%
+    Description: Writes variables to remote host using escaped syntax.
+    Usecase: Environment poisoning on remote machines.
+    Category: Lateral Movement
+    Privileges: DomainUser
+    MitreID: T1021
+    OperatingSystem: Windows
+
+  - Command: setx TZONE /K HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\TimeZoneInformation\StandardName
+    Description: Extracts registry value into an environment variable.
+    Usecase: Harvest registry data without reg.exe or PowerShell.
+    Category: Collection
+    Privileges: User
+    MitreID: T1005
+    OperatingSystem: Windows
+
+  - Command: setx BUILD /K "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\CurrentBuildNumber" /M
+    Description: Extracts build number and writes it as system variable.
+    Usecase: Persistence with registry-derived data.
+    Category: Persistence
+    Privileges: Administrator
+    MitreID: T1547
+    OperatingSystem: Windows
+
+  - Command: setx /S system /U user /P password TZONE /K HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\TimeZoneInformation\StandardName
+    Description: Extracts registry data remotely into variables.
+    Usecase: Remote discovery and persistence.
+    Category: Lateral Movement
+    Privileges: DomainUser
+    MitreID: T1021
+    OperatingSystem: Windows
+
+  - Command: setx /S system /U user /P password BUILD /K "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\CurrentBuildNumber" /M
+    Description: Writes system variables on remote host using registry data.
+    Usecase: Cross-host persistent config poisoning.
+    Category: Lateral Movement
+    Privileges: DomainAdmin
+    MitreID: T1021
+    OperatingSystem: Windows
+
+  - Command: setx /F ipconfig.out /X
+    Description: Displays a file with coordinate references.
+    Usecase: Covert file reading without type/more.
+    Category: Discovery
+    Privileges: User
+    MitreID: T1083
+    OperatingSystem: Windows
+
+  - Command: setx IPADDR /F ipconfig.out /A 5,11
+    Description: Extracts text at absolute coordinates.
+    Usecase: Extract sensitive info from dumped output.
+    Category: Discovery
+    Privileges: User
+    MitreID: T1083
+    OperatingSystem: Windows
+
+  - Command: setx OCTET1 /F ipconfig.out /A 5,3 /D "#$*."
+    Description: Parses file content using delimiter tokens.
+    Usecase: Structured data extraction.
+    Category: Discovery
+    Privileges: User
+    MitreID: T1083
+    OperatingSystem: Windows
+
+  - Command: setx IPGATEWAY /F ipconfig.out /R 0,7 Gateway
+    Description: Extracts text relative to a matched pattern.
+    Usecase: Pattern-based file parsing like grep/awk.
+    Category: Discovery
+    Privileges: User
+    MitreID: T1083
+    OperatingSystem: Windows
+
+  - Command: setx /S system /U user /P password /F c:\ipconfig.out /X
+    Description: Remote file read using SetX.
+    Usecase: File discovery without remote shell.
+    Category: Lateral Movement
+    Privileges: DomainUser
+    MitreID: T1021
+    OperatingSystem: Windows
+
+Full_Path:
+  - Path: C:\Windows\System32\setx.exe
+  - Path: C:\Windows\SysWOW64\setx.exe
+
+Code_Sample:
+  - Code: setx payload C:\Users\Public\evil.exe
+  - Code: setx /M COMSPEC C:\Users\Public\cmd.exe
+  - Code: setx PATH "%PATH%;C:\Temp\bin"
+  - Code: setx SECRET /K HKCU\Software\MyApp\Config\Password
+  - Code: setx KEYVAL /F output.txt /A 2,5
+  - Code: setx /S 10.0.0.8 /U corp\admin /P Pass123 backdoor C:\backdoor.exe
+
+Detection:
+  - IOC: Modification of PATH, COMSPEC, WINDIR, PATHEXT, TEMP, TMP
+  - IOC: SetX usage with /M from untrusted process
+  - IOC: Remote variable creation via /S /U /P
+  - IOC: Registry extraction via /K from sensitive paths
+  - IOC: Coordinate-based parsing (/A, /R, /X)
+  - Analysis: Environment manipulation followed by suspicious execution
+
+Resources:
+  - Link: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/setx
+
+Acknowledgement:
+  - Person: Raja Singh
+    Handle: '@fluxwarden'
